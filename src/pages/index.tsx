@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Htag, Button, Ptag, Tag, Rating } from "@/components";
-import { Layout, withLayout } from "@/layout/Layout";
+import { withLayout } from "@/layout/Layout";
+import { GetStaticProps } from "next";
+import axios from "axios";
+import { MenuItem } from "@/interfaces/menu.interface";
+import { promises as fs } from "fs";
+import path from "path";
 
-function Home(): JSX.Element {
+function Home({ menu }: HomeProps): JSX.Element {
 	const [rating, setRating] = useState<number>(4);
 	return (
 		<>
@@ -27,8 +32,46 @@ function Home(): JSX.Element {
 			</Tag>
 			<Rating rating={rating} />
 			<Rating rating={rating} isEditable={true} setRating={setRating} />
+			<ul>
+				{menu.map((m) => (
+					<li key={m._id.secondCategory}>{m._id.secondCategory}</li>
+				))}
+			</ul>
 		</>
 	);
 }
 
 export default withLayout(Home);
+
+export const getStaticProps: GetStaticProps<HomeProps> = async () => {
+	const firstCategory = 0;
+	const { data: menu } = await axios.post<MenuItem[]>(
+		process.env.NEXT_PUBLICK_DOMAIN + "/api/top-page/find",
+		{ firstCategory }
+	);
+	return {
+		props: {
+			menu,
+			firstCategory,
+		},
+	};
+};
+
+// export const getStaticProps: GetStaticProps<HomeProps> = async () => {
+// 	const firstCategory = 0;
+
+// 	const filePath = path.join(process.cwd(), "src", "DB", "menuDB.json");
+// 	const fileContents = await fs.readFile(filePath, "utf8");
+// 	const menu: MenuItem[] = JSON.parse(fileContents);
+// 	return {
+// 		props: {
+// 			menu,
+// 			firstCategory,
+// 		},
+// 	};
+// };
+
+interface HomeProps extends Record<string, unknown> {
+	menu: MenuItem[];
+	firstCategory: number;
+}
